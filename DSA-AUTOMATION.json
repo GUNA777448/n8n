@@ -1,0 +1,411 @@
+{
+  "name": "DSA-AUTOMATION",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.aiAgentPrompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        -144
+      ],
+      "id": "982f6e7f-300a-48ac-b188-d555cd7f70ab",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        16
+      ],
+      "id": "57c108ac-e677-451a-b009-e4b8e649d6d8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jGy06qSocvbsnpSJ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        -144
+      ],
+      "id": "0fc366a7-febf-480b-8905-867e151f278c",
+      "name": "TRIG_INIT"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ITGb4rOij9O17BG-SZVTLMifS8Ww1xnKiTf4T4EHOvg/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1912920620,
+          "mode": "list",
+          "cachedResultName": "DSA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ITGb4rOij9O17BG-SZVTLMifS8Ww1xnKiTf4T4EHOvg/edit#gid=1912920620"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -752,
+        -144
+      ],
+      "id": "36bb0e87-f1fe-4ec0-a661-4b0e5c640582",
+      "name": "READ-EXCEL",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "notesInFlow": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "191OoKztYyD1PCD2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        -144
+      ],
+      "id": "2cba602c-2def-4241-8298-f2d69705ba8e",
+      "name": "A-1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the array of problems\nconst problems = items[0].json.data;\n\n// Shuffle the array\nconst shuffled = problems.sort(() => 0.5 - Math.random());\n\n// Take first 3 items\nconst selected = shuffled.slice(0, 3);\n\n// Return them as separate items\nreturn selected.map(problem => ({ json: problem }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -144
+      ],
+      "id": "31792165-cffe-47a6-88cc-544d8d19ac95",
+      "name": "PROBLEM_SELECTOR"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -144
+      ],
+      "id": "319062d6-b7e9-452e-a519-a209db43f8a0",
+      "name": "LT->1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -144
+      ],
+      "id": "e049538f-f3d6-4960-9d5e-d3e2b5fc77f7",
+      "name": "A2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const problems = items[0].json.data;\nconst shuffled = problems.sort(() => 0.5 - Math.random());\n\nconst selectedProblem = shuffled[0];\nconst topic = selectedProblem.TOPICS || \"General\";\nconst originalLink = selectedProblem.LINK || \"\";\n\nlet platform = \"General\";\nlet crossPlatform = \"\";\n\nif (originalLink.includes(\"geeksforgeeks\")) {\n  platform = \"GeeksforGeeks\";\n  crossPlatform = \"LeetCode\";\n} else if (originalLink.includes(\"leetcode\")) {\n  platform = \"LeetCode\";\n  crossPlatform = \"GeeksforGeeks\";\n} else {\n  platform = \"General\";\n  crossPlatform = \"LeetCode & GeeksforGeeks\";\n}\n\nconst quotes = [\n  \"Push yourself, because no one else is going to do it for you. 💪\",\n  \"Consistency beats intensity. Code a little every day! 🕒\",\n  \"Every big coder was once a beginner who didn’t quit. 🌱\",\n  \"Debugging is like being the detective of your own mistakes. 🕵️‍♂️\",\n  \"Eat. Sleep. Code. Repeat. 🚀\"\n];\nconst randomQuote = quotes[Math.floor(Math.random() * quotes.length)];\n\n// HTML Email\nlet html = `\n<div style=\"font-family: Arial, sans-serif; background: #f9f9ff; padding: 20px; border-radius: 12px; color: #333;\">\n  <div style=\"font-size: 24px; text-align:center; margin-bottom: 20px;\">\n    🚀🔥 <span style=\"color:#5c6bc0; font-weight:bold;\">Your DSA Challenge Pack</span> 🔥🚀\n  </div>\n  <div style=\"font-size: 18px; margin-bottom: 10px; text-align:center;\">\n    Hey coder! 💻 Here are your DSA problems for today 👇\n  </div>\n  <ol style=\"font-size: 16px; line-height: 1.8; padding-left: 20px; margin-top: 10px;\">\n`;\n\nlet plain = `🚀🔥 Your DSA Challenge Pack 🔥🚀\\n\\nHey coder! 💻 Here are your DSA problems for today 👇\\n\\n`;\n\nshuffled.forEach((p, i) => {\n  html += `\n    <li>\n      <span style=\"color:#ff7043;\">${p.QUESTIONS}</span> \n      (<b>${p.TOPICS}</b>)<br/>\n      <h2>${p.SNO}</h2>\n      👉 <a href=\"${p.LINK}\" style=\"color:#1e88e5; text-decoration:none;\">Open Problem</a>\n    </li>\n  `;\n\n  plain += `${i + 1}. ${p.QUESTIONS} (${p.TOPICS})\\n   👉 Link: ${p.LINK}\\n\\n`;\n});\n\nhtml += `\n  </ol>\n  <div style=\"margin-top: 25px; padding: 15px; background:#fff8e1; border-radius: 8px; font-size: 16px;\">\n    <span style=\"font-size:20px;\">💡</span>\n    <b>Quote of the Day:</b><br/>\n    <i>${randomQuote}</i>\n  </div>\n  <div style=\"margin-top: 30px; text-align:center; font-size: 14px; color:#888;\">\n    <pre style=\"font-size:14px; line-height: 1.2; display:inline-block; background:#f0f0f0; padding:10px; border-radius:10px;\">\n(•_•)\n<)   )╯  Happy Coding! 🚀\n /   \\\\\n    </pre>\n  </div>\n</div>\n`;\n\nplain += `\\n💡 Quote of the Day:\\n\"${randomQuote}\"\\n\\n(•_•)\\n<)  )╯ Happy Coding! 🚀\\n /  \\\\`;\n\n// AI Agent Prompt\nconst agentPrompt = `\n🤖 You are an intelligent coding assistant agent.\n\nThe user has a DSA problem titled:\n\"*${selectedProblem.QUESTIONS}*\"\n\n🔗 Platform link: ${originalLink}\n📚 Topic: ${topic}\n\nYour job:\n1. Search for the most relevant equivalent of this problem if the *${crossPlatform}*  is gfg then give for leetcode problem , else if the ${crossPlatform} is leetcode then give the gfg problem \n2. Return a **direct link** to that problem.\n3. Include a short ✍️ *summary*, 🎯 *difficulty level* (if known), and 🏷️ *topic tags*.\n4. Provide a 🎥 *YouTube video* explaining the concept (preferably from top creators like Striver, NeetCode, Take U Forward, CodeHelp).\n\n📦 Final output format:\n- *Problem Title:* ...\n- *Platform Links-GFG,Leetcode:* ...\n- *Summary:* ...\n- *Difficulty:* ...\n- *Topic Tags:* ...\n- *YouTube Resource:* [Title] - [Link]\n\nIf no exact match exists, suggest the closest one and say why.\n`;\n\nreturn [\n  {\n    json: {\n      emailBody: html,\n      telegramBody: plain,\n      aiAgentPrompt: agentPrompt,\n      selectedQuestion: selectedProblem.QUESTIONS,\n      selectedTopic: topic,\n      detectedPlatform: platform,\n      crossPlatformToFind: crossPlatform,\n      ProblemInfo: selectedProblem  // ✅ Full original problem fields\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -144
+      ],
+      "id": "6975ef3a-d41e-4aa6-852b-ff65771dbaab",
+      "name": "FINAL-CODE"
+    },
+    {
+      "parameters": {
+        "jsCode": "const problem = items[0].json;\n\nconst question = problem.selectedQuestion;\nconst topic = problem.selectedTopic;\nconst platform = problem.detectedPlatform || \"Unknown Platform\";\nconst linkToSolve = problem.telegramBody.match(/👉 Link: (.+)/)?.[1] || \"https://example.com/dsa\";\nconst dummyDoneLink = `https://n8n-gc8t.onrender.com/webhook-test/0b467326-a403-4b84-9c71-4ad679cfb35f`;\n\nconst message = `\n🔥 *Daily DSA Checkpoint*\n\n*Problem:* ${question}\n*Topic:* _${topic}_\n*Platform:* ${platform}\n\n🤔 Have you solved this problem?\n\nIf *not*, get started here 👇  \n🔗 https://n8n-gc8t.onrender.com/webhook-test/2aa6933f-d200-49e0-b6f2-d4c730f65a99\n\n✅ Once you're done, click the link below to mark it as completed:  \n📝 ${dummyDoneLink}\n\nKeep grinding! 💪 You're getting closer every day.  \n`;\n\nreturn [\n  {\n    json: {\n      message: message.trim()\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        176
+      ],
+      "id": "1183be8d-9491-4907-ae92-0be682f4edee",
+      "name": "CODE_CONFIRMATION"
+    },
+    {
+      "parameters": {
+        "chatId": "7761962418",
+        "text": "={{ $json.message }}",
+        "replyMarkup": "inlineKeyboard",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "reply_to_message_id": 0
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        176
+      ],
+      "id": "28c54fe9-3658-4e6e-8475-724927430da5",
+      "name": "SEND_CNF_MSG",
+      "webhookId": "722f466f-28e8-4a62-a8fb-f40226b53519",
+      "credentials": {
+        "telegramApi": {
+          "id": "4OfkozsV8MqqxFuw",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "0b467326-a403-4b84-9c71-4ad679cfb35f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -416
+      ],
+      "id": "7bf33685-d29f-4aa9-9256-5fe5786a2275",
+      "name": "Webhook",
+      "webhookId": "0b467326-a403-4b84-9c71-4ad679cfb35f"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the row_no from the webhook query params\nconst rowNo = $json.row_no;  // e.g., webhook?row_no=5\n\n// New status you want to set\nconst newStatus = \"Done\";\n\n// Pass data forward to Google Sheets node\nreturn [\n  {\n    json: {\n      rowNumber: Number(rowNo), // converting to number for Sheets\n      values: [newStatus]       // Array because Sheets expects rows as arrays\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -416
+      ],
+      "id": "10957e13-6186-4bee-aebe-6c9d76e5e268",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "chatId": "7761962418",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        528,
+        -144
+      ],
+      "id": "f17e2c5b-854e-490f-b0db-1c9ba0c256e8",
+      "name": "INIT_MSG",
+      "webhookId": "267e55e2-1af6-41cf-9f3d-fca7d561834c",
+      "credentials": {
+        "telegramApi": {
+          "id": "4OfkozsV8MqqxFuw",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "INIT_MSG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TRIG_INIT": {
+      "main": [
+        [
+          {
+            "node": "READ-EXCEL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "READ-EXCEL": {
+      "main": [
+        [
+          {
+            "node": "A-1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-1": {
+      "main": [
+        [
+          {
+            "node": "PROBLEM_SELECTOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROBLEM_SELECTOR": {
+      "main": [
+        [
+          {
+            "node": "LT->1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LT->1": {
+      "main": [
+        [
+          {
+            "node": "A2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A2": {
+      "main": [
+        [
+          {
+            "node": "FINAL-CODE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FINAL-CODE": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CODE_CONFIRMATION",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CODE_CONFIRMATION": {
+      "main": [
+        [
+          {
+            "node": "SEND_CNF_MSG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEND_CNF_MSG": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dbcfef94-3bcb-41f7-9be1-3b75a05f7ff0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1ebf45c39dc7c3ae101d3556ff1308cef772efcc5e9393622f53979335e35b65"
+  },
+  "id": "hGDKioIR1wd4PHGu",
+  "tags": [
+    {
+      "createdAt": "2025-08-08T08:06:08.075Z",
+      "updatedAt": "2025-08-08T08:06:08.075Z",
+      "id": "8Ayz6DaFhUMVZp10",
+      "name": "DEPLOYED"
+    }
+  ]
+}
