@@ -1,28 +1,22 @@
-name: Deploy JSON File
+name: CI Workflow
 
-# Trigger on push to main branch
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# Workflow jobs
 jobs:
-  deploy:
-    # Use latest Ubuntu runner
+  build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    # Check out the repository
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    # Placeholder step for deploying the JSON file
-    - name: Deploy JSON file
-      run: |
-        echo "Deploying JSON file..."
-        # Add your deployment commands here
-        # For example:
-        # - Upload to cloud storage
-        # - Deploy to server
-        # - Update CDN
-        echo "JSON file deployment completed"
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
